@@ -1,9 +1,11 @@
 const fs = require('fs');
 const Discord = require('discord.js');
-const { prefix, token } = require('./config.json')
+const { startWarlogScheduler } = require('./warlogEventHandler');
+const { prefix, token } = require('./config.json');
 
 const client = new Discord.Client();
 const cooldowns = new Discord.Collection();
+
 
 
 // Create a commands collection
@@ -20,7 +22,10 @@ for (const file of commandFiles) {
 
 // When the bot has connected to Discord, log a ready message
 client.once('ready', () => {
-	console.log('Ready!');
+	console.log('Ready! Starting schedulers');
+	
+	// start warlog scheduler
+	startWarlogScheduler(client);
 });
 
 // Message event handler
@@ -81,4 +86,5 @@ process.on('unhandledRejection', error => {
 	console.error('Unhandled promise rejection:', error);
 });
 
+// log bot into discord
 client.login(token);
