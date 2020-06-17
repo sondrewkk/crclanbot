@@ -1,0 +1,14 @@
+
+dotenv
+legge til mongodb for lagring av klaner til warlog.
+legge til at kun admin eller server owner kan bruke kommando
+teste at intervallet fungerer
+docker
+Kjøre i "prod" på maskin
+
+
+Ideer
+Warlog: Vurdere å få output i rekkefølge etter tid. Er det mulig? 
+        Kanskje det fikser seg selv når man faktisk ikke logger alle kampene ved en kjøring.
+
+Ved adding av bot. Få spørsmål om å starte scheduling jobber.
