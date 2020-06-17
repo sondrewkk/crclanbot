@@ -1,5 +1,3 @@
-const { prefix } = require('../config.json');
-
 module.exports = {
 	name: 'help',
 	description: 'List all of my commands or info about a specific command.',
@@ -7,6 +5,7 @@ module.exports = {
 	usage: '[command name]',
 	cooldown: 5,
 	execute(message, args) {
+    const prefix = process.env.PREFIX;
 		const data = [];
     const { commands } = message.client;
 

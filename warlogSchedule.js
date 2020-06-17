@@ -5,20 +5,20 @@ const table = require('text-table');
 const mergeImages = require('merge-images');
 const { Canvas, Image } = require('canvas');
 const { MessageAttachment, MessageEmbed } = require('discord.js');
-const {MOMENT_LOCALE, TIME_ZONE, MOMENT_DATETIME_FORMAT} = require('./config.json');
-
 
 /**
- * Log war battles for a clan
+ * 
+ * @param {The discord channel to send log embeds} channel 
  * @param {Clan tag} tag 
+ * @param {Battles the last x minutes} lastMinutes 
  */
-async function logBattles(channel, tag) {
+async function logBattles(channel, tag, lastMinutes) {
   try {
 
     const clanWarBattles = await getWarBattles(tag);
     
     const logBattles = clanWarBattles
-      .filter(battle => moment.utc(battle.battleTime).isAfter(moment().subtract(12, 'hours')))
+      .filter(battle => moment.utc(battle.battleTime).isAfter(moment().subtract(lastMinutes, 'minutes')))
       .map( async battle => {
         try {
          
@@ -79,9 +79,9 @@ async function logBattles(channel, tag) {
                 { name: 'Opponent', value: `${battle.opponent[0].name}`, inline: true},
                 { name: 'Battle time', value: `${moment
                       .utc(battle.battleTime)
-                      .locale(MOMENT_LOCALE)
-                      .tz(TIME_ZONE)
-                      .format(MOMENT_DATETIME_FORMAT)}`},
+                      .locale(process.env.MOMENT_LOCALE)
+                      .tz(process.env.TIME_ZONE)
+                      .format(process.env.MOMENT_DATETIME_FORMAT)}`},
                 { name: 'Training', value: `${totalTrainingCount} practice battles with the war deck \n A total of ${allFriendlies} friendlies during the last 25 battles.\n ${countTable}`},
                 { name: 'Deck', value: `[Click here to try the deck](${deckLink} "Deck") `}
               )

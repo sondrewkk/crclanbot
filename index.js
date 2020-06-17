@@ -1,12 +1,12 @@
+
 const fs = require('fs');
 const Discord = require('discord.js');
 const { startWarlogScheduler } = require('./warlogEventHandler');
-const { prefix, token } = require('./config.json');
 
 const client = new Discord.Client();
 const cooldowns = new Discord.Collection();
-
-
+const token = process.env.DISCORD_TOKEN;
+const prefix = process.env.PREFIX;
 
 // Create a commands collection
 client.commands = new Discord.Collection();
@@ -82,6 +82,7 @@ client.on('message', message => {
 
 });
 
+// UnhandledRejection error output
 process.on('unhandledRejection', error => {
 	console.error('Unhandled promise rejection:', error);
 });

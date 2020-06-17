@@ -6,7 +6,6 @@ let clans = [];
 const logInterval = 60000; // One minute
 let client = null;
 
-
 warlogEventHandler.on('uncaughtException', err => {
   console.error(err);
 });
@@ -30,9 +29,8 @@ function log() {
 
     if(delta >= clan.interval){
       client.channels.fetch(clan.channelId).then(channel => {
-        logBattles(channel, clan.tag);
+        logBattles(channel, clan.tag, clan.interval);
       });
-      
     }
   });
 }

@@ -1,7 +1,6 @@
-
 const { warlogEventHandler } = require('../warlogEventHandler.js')
 
-// legge til at kun admin eller server owner kan bruke kommando
+
 module.exports = {
 	name: 'warlog',
 	description: 'Start or stop warlog for a clan.',
