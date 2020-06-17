@@ -2,6 +2,7 @@
 const fs = require('fs');
 const Discord = require('discord.js');
 const { startWarlogScheduler } = require('./warlogEventHandler');
+const mongoose = require('mongoose');
 
 const client = new Discord.Client();
 const cooldowns = new Discord.Collection();
@@ -19,6 +20,18 @@ for (const file of commandFiles) {
   const command = require(`./commands/${file}`)
   client.commands.set(command.name, command);
 }
+
+// Connect to database
+mongoose.connect(`${process.env.DB_URI}/${process.env.DB_NAME}`, { useNewUrlParser: true, useUnifiedTopology: true });
+const db = mongoose.connection;
+
+// Database error event handler
+db.on('error', console.error.bind(console, 'connection error:'));
+
+// Database successfull connection event handler
+db.once('open', () => {
+	console.log('Connected to database');
+});
 
 // When the bot has connected to Discord, log a ready message
 client.once('ready', () => {
