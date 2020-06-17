@@ -1,9 +1,10 @@
 
-legge til mongodb for lagring av klaner til warlog.
+legge til mongodb for lagring av klaner til warlog scheduler.
 legge til at kun admin eller server owner kan bruke kommando
 teste at intervallet fungerer
 docker
 Kjøre i "prod" på maskin
+tilpasset prefix, legge til prefix kommando
 
 
 Ideer
@@ -13,4 +14,5 @@ Warlog: Vurdere å få output i rekkefølge etter tid. Er det mulig?
 Ved adding av bot. Få spørsmål om å starte scheduling jobber.
 
 Bugs
-Under posting av warlogs ble eh unhadled promiserejection kastet. med code 500 med en post melding til kanelen
+- Under posting av warlogs ble eh unhadled promiserejection kastet. med code 500 med en post melding til kanelen.
+- Utskriften av treningstabell skriver ut kamptype selvom det ikke er spillt kamper med decket på den typen.
