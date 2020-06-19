@@ -1,8 +1,8 @@
 const EventEmitter = require('events');
 const { logBattles } = require('./warlogSchedule.js');
+const Clan = require('./schema/clanSchema.js');
 
 const warlogEventHandler = new EventEmitter();
-let clans = [];
 const logInterval = 60000; // One minute
 let client = null;
 
@@ -10,37 +10,44 @@ warlogEventHandler.on('uncaughtException', err => {
   console.error(err);
 });
 
-warlogEventHandler.on('add', (tag, interval, channelId) => {
-  const clan = {
-    tag: tag,
-    interval: interval,
-    previousRun: 0,
-    channelId: channelId
-  };
+warlogEventHandler.on('add', async (tag, interval, channelId) => {
+  try {
+    const clan = await Clan.findOne({tag: tag});
+    const channel = await client.channels.fetch(channelId);
+    
+    if(clan) {
+      channel.send(`The clan ${tag} is already added to the warlog schedule.`);
+    } 
+    else {
+      const newClan = new Clan({tag, interval, channelId});
+      await newClan.save();
 
-  clans.push(clan);
+      channel.send(`You have succsessfullt started logging of war battles.`);  
+    }
+  } catch(err) { console.error(err) };
 });
 
-function log() {
+async function log() {
+  const clans = await Clan.find({});
   console.log(`There are ${clans.length} number of clans to log`);
   
-  clans.map(clan => {
+  clans.filter(clan => {
     const delta = Date.now() - clan.previousRun;
-
-    if(delta >= clan.interval){
-      client.channels.fetch(clan.channelId).then(channel => {
-        logBattles(channel, clan.tag, clan.interval);
-      });
-    }
+    return delta >= clan.interval;
+  })
+  .map(async clan => {
+    const channel = await client.channels.fetch(clan.channelId);
+    logBattles(channel, clan.tag, clan.interval);
   });
+
+  setTimeout(log, logInterval);
 }
 
 function startWarlogScheduler(discordClient){
-  
   client = discordClient;
 
   // Start warlog scheduler
-  setInterval(log, logInterval);
+  log();
 }
 
 module.exports = { 
