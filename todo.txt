@@ -1,10 +1,10 @@
 
-legge til mongodb for lagring av klaner til warlog scheduler.
 legge til at kun admin eller server owner kan bruke kommando
 teste at intervallet fungerer
 docker
 Kjøre i "prod" på maskin
 tilpasset prefix, legge til prefix kommando
+maks en schedule per channel
 
 
 Ideer
