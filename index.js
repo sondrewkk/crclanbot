@@ -56,6 +56,16 @@ client.on('message', message => {
 		return message.reply('I can\'t execute that command inside DMs!');
 	}
 
+	// If the command need admin rights, check if message author is admin or server owner
+	if (command.admin) {
+		const isOwner = message.channel.ownerId === message.member.id;
+		const isAdmin = message.member.roles.cache.some(role => role.name === 'Admin' || role.name === 'Administrator');
+
+		if(!isOwner || !isAdmin) {
+			return message.reply('You need to be an admin to execute that command.')
+		}
+	}
+
 	if (command.args && !args.length) {
 		let reply = `You didn't provide any arguments, ${message.author}!`;
 
