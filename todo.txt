@@ -5,7 +5,7 @@ docker
 Kjøre i "prod" på maskin
 tilpasset prefix, legge til prefix kommando
 maks en schedule per channel
-
+logging av kommandoer utført av members uten tilgang
 
 Ideer
 Warlog: Vurdere å få output i rekkefølge etter tid. Er det mulig? 
