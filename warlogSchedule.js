@@ -10,15 +10,15 @@ const { MessageAttachment, MessageEmbed } = require('discord.js');
  * 
  * @param {The discord channel to send log embeds} channel 
  * @param {Clan tag} tag 
- * @param {Battles the last x minutes} lastMinutes 
+ * @param {Battles the last x milliseconds} interval 
  */
-async function logBattles(channel, tag, lastMinutes) {
+async function logBattles(channel, tag, interval) {
   try {
 
     const clanWarBattles = await getWarBattles(tag);
     
     const logBattles = clanWarBattles
-      .filter(battle => moment.utc(battle.battleTime).isAfter(moment().subtract(lastMinutes, 'minutes')))
+      .filter(battle => moment(battle.battleTime).isAfter(moment().subtract(interval)))
       .map( async battle => {
         try {
          
