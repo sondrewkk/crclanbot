@@ -3,7 +3,10 @@ module.exports = {
 	description: 'List all of my commands or info about a specific command.',
 	aliases: ['commands'],
 	usage: '[command name]',
-	cooldown: 5,
+  cooldown: 5,
+  guildOnly: false,
+  admin: false,
+  args: false,
 	execute(message, args) {
     const prefix = process.env.PREFIX;
 		const data = [];

@@ -7,6 +7,7 @@ module.exports = {
 	usage: '[start/stop] [clanTag] [interval (minutes)]',
   cooldown: 5,
   guildOnly: true,
+  admin: true,
   args: true,
 	async execute(message, args) {
 
