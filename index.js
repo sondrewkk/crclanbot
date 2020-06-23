@@ -58,10 +58,10 @@ client.on('message', message => {
 
 	// If the command need admin rights, check if message author is admin or server owner
 	if (command.admin) {
-		const isOwner = message.channel.ownerId === message.member.id;
+		const isOwner = message.guild.ownerID === message.member.id;
 		const isAdmin = message.member.roles.cache.some(role => role.name === 'Admin' || role.name === 'Administrator');
 
-		if(!isOwner || !isAdmin) {
+		if(!isAdmin && !isOwner) {
 			return message.reply('You need to be an admin to execute that command.')
 		}
 	}
