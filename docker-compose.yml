@@ -1,0 +1,25 @@
+version: "3.2"
+
+services:
+  bot:
+    image: crclanbot:latest
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=production 
+      - PREFIX=!
+      - CR_API_URL=proxy.royaleapi.dev/v1
+      - MOMENT_LOCALE=nb
+      - TIME_ZONE=Europe/Oslo
+      - MOMENT_DATETIME_FORMAT=lll
+      - DB_HOST=mongo
+      - DB_PORT=27017
+      - DB_NAME=crclanbot
+    depends_on:
+      - mongo
+  mongo:
+    image: mongo:latest
+    volumes:
+      - ./data:/data/db
+    ports:
+      - "27017:27017"
