@@ -1,4 +1,5 @@
 mongod.lock
+/volumes
 
 # Logs
 logs
