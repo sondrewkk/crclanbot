@@ -1,4 +1,4 @@
-version: "3.2"
+version: "3.7"
 
 services:
   bot:
@@ -6,20 +6,43 @@ services:
     ports:
       - "8080:80"
     environment:
-      - NODE_ENV=production 
-      - PREFIX=!
-      - CR_API_URL=proxy.royaleapi.dev/v1
-      - MOMENT_LOCALE=nb
-      - TIME_ZONE=Europe/Oslo
-      - MOMENT_DATETIME_FORMAT=lll
-      - DB_HOST=mongo
-      - DB_PORT=27017
-      - DB_NAME=crclanbot
+      NODE_ENV: 'production'
+      PREFIX: '!'
+      CR_API_URL: 'proxy.royaleapi.dev/v1'
+      MOMENT_LOCALE: 'nb'
+      TIME_ZONE: 'Europe/Oslo'
+      MOMENT_DATETIME_FORMAT: 'lll'
+      DB_HOST: 'db'
+      DB_PORT: 27017
+      DB_NAME: 'crclanbot'
+      DB_USER: 'bot'
+      WAIT_HOSTS: db:27017
+    secrets:
+      - CR_API_TOKEN
+      - DISCORD_TOKEN
+      - DB_USER_PASS
     depends_on:
-      - mongo
-  mongo:
-    image: mongo:latest
-    volumes:
-      - ./data:/data/db
+      - db
+  db:
+    image: mongo
     ports:
-      - "27017:27017"
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: 'root'
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/MONGO_INITDB_ROOT_PASSWORD
+    secrets:
+      - MONGO_INITDB_ROOT_PASSWORD
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - mongodb_data:/data/db
+secrets:
+  MONGO_INITDB_ROOT_PASSWORD:
+    external: true
+  CR_API_TOKEN:
+    external: true
+  DISCORD_TOKEN:
+    external: true
+  DB_USER_PASS:
+    external: true
+volumes:
+  mongodb_data:
