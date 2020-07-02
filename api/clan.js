@@ -1,8 +1,9 @@
 const axios = require('axios');
+const { secrets } = require('docker-secret');
 
 const options = {
   headers: {
-    'Authorization': `Bearer ${process.env.CR_API_TOKEN}`
+    'Authorization': `Bearer ${secrets.CR_API_TOKEN || process.env.CR_API_TOKEN}`
   }
 };
 

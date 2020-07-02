@@ -3,10 +3,12 @@ const fs = require('fs');
 const Discord = require('discord.js');
 const { startWarlogScheduler } = require('./warlogEventHandler');
 const mongoose = require('mongoose');
+const { secrets } = require('docker-secret');
 
 const client = new Discord.Client();
 const cooldowns = new Discord.Collection();
-const token = process.env.DISCORD_TOKEN;
+const token = secrets.DISCORD_TOKEN;
+const dbUserPassword = secrets.DB_USER_PASS;
 const prefix = process.env.PREFIX;
 
 // Create a commands collection
@@ -22,7 +24,8 @@ for (const file of commandFiles) {
 }
 
 // Connect to database
-mongoose.connect(`${process.env.DB_URI}/${process.env.DB_NAME}`, { useNewUrlParser: true, useUnifiedTopology: true });
+const connectionString = `mongodb://${process.env.DB_USER}:${dbUserPassword}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+mongoose.connect(connectionString, { useNewUrlParser: true, useUnifiedTopology: true });
 const db = mongoose.connection;
 
 // Database error event handler
