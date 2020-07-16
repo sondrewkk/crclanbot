@@ -82,7 +82,7 @@ async function logBattles(channel, tag, interval) {
                       .locale(process.env.MOMENT_LOCALE)
                       .tz(process.env.TIME_ZONE)
                       .format(process.env.MOMENT_DATETIME_FORMAT)}`},
-                { name: 'Training', value: `${totalTrainingCount} practice battles with the war deck \n A total of ${allFriendlies} friendlies during the last 25 battles.\n ${countTable}`},
+                { name: 'Training', value: `${totalTrainingCount} practice battles with the war deck \n A total of ${allFriendlies} friendlies during the last 25 battles.\n The table is showing games played with the wardeck (WD) and games that is 1, 2, 3 or 4 cards diffrent from WD. ${countTable}`},
                 { name: 'Deck', value: `[Click here to try the deck](${deckLink} "Deck") `}
               )
               .attachFiles(new MessageAttachment(deckImage, 'deck.png'))
