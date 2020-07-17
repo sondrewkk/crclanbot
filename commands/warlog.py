@@ -8,7 +8,7 @@ class Warlog(commands.Cog, name="Warlog Commands"):
     
     self.warlogEventHandler = WarlogEventHandler(self.bot)  
     self.warlogEmitter = WarlogEmitter()
-    self.warlogEmitter.bind_async(self.warlogEventHandler.startLogEventLoop, on_start = self.warlogEventHandler.onStartLog)
+    self.warlogEmitter.bind_async(self.warlogEventHandler.loop, on_start = self.warlogEventHandler.onStartLog)
 
   @commands.group()
   async def warlog(self, ctx):
