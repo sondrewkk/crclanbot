@@ -1,7 +1,7 @@
 from discord.ext import commands
 from warlogEventHandler import WarlogEventHandler, WarlogEmitter
 
-class Warlog(commands.Cog, name="Warlog Commands"):
+class WarlogCog(commands.Cog, name="Warlog Commands"):
 
   def __init__(self, bot):
     self.bot = bot
@@ -21,7 +21,7 @@ class Warlog(commands.Cog, name="Warlog Commands"):
     self.warlogEmitter.emit("on_start", channelId = ctx.message.channel.id, clanTag = clanTag, interval = interval)
   
 def setup(bot):
-  bot.add_cog(Warlog(bot))
+  bot.add_cog(WarlogCog(bot))
 
 
 # module.exports = {

@@ -1,6 +1,8 @@
 # volumes used by docker
 /volumes
 
+/testdata
+
 /node_modules
 
 # Byte-compiled / optimized / DLL files

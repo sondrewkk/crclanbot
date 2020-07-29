@@ -5,7 +5,7 @@ from environment import Environment
 from commandHandler import CommandHandler
 from warlogEventHandler import WarlogEventHandler
 from mongoengine import connect
-
+import json
 this = sys.modules[__name__]
 this.running = False
 
@@ -18,7 +18,7 @@ env = Environment()
 def main():
   
   #Initialize
-  print("Starting up...")
+  print(f"Starting up discord bot v.{discord.__version__}")
   
   bot = commands.Bot(command_prefix = env.PREFIX, description = "Clash Royale clan bot")
 
@@ -37,6 +37,7 @@ def main():
     commandHandler = CommandHandler(bot, "commands")
 
   # Run bot
+
   bot.run(env.DISCORD_TOKEN, bot=True, reconnect=True)
 
 ######################################################################################  

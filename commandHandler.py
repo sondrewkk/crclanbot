@@ -7,7 +7,7 @@ class CommandHandler:
     self.bot = bot
     self.commandsDir = f"{getcwd()}/{commandsDir}"
     self.extensions = [f"{commandsDir}.{basename(f)[:-3]}" for f in listdir(self.commandsDir) if f[-3:] == ".py" and not f.endswith("__init__.py")]
-
+    print(self.extensions)
     print("Loading commands...")
 
     for extension in self.extensions:

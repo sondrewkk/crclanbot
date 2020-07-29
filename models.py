@@ -1,8 +1,8 @@
-from mongoengine import Document, StringField, IntField
+from mongoengine import Document, StringField, IntField, FloatField
 
-class WarlogModel(Document):
+class Warlog(Document):
   clanTag = StringField(required = True)
   interval = IntField(default = 15) # mins
-  previousRun = IntField(default = 0)
+  previousRun = FloatField(default = 0.0)
   channelId = IntField(required = True)
   meta = {"collection": "warlogs"}

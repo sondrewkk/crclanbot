@@ -1,8 +1,14 @@
 import asyncio
+import json
 from pydispatch import Dispatcher
-from models import WarlogModel
+from models import Warlog
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+from crApi import ClashRoyaleApi
+from dateutil.parser import *
+from warlogSchedule import logBattles
+from math import floor
+from environment import Environment
 class WarlogEmitter(Dispatcher):
   _events_ = ['on_start']
 
@@ -13,11 +19,14 @@ class WarlogEventHandler():
     self.bot = bot
     self.loop = asyncio.get_event_loop()
     self.warlogScheduler = AsyncIOScheduler()
-    self.warlogScheduler.add_job(self.log, "interval", minutes = 1, next_run_time = datetime.now())
+    self.warlogScheduler.add_job(self.log, "interval", minutes = 5, next_run_time = datetime.now())
     self.warlogScheduler.start()
+    self.api = ClashRoyaleApi()
+    self.env = Environment()
+    self.isDevelopment = (self.env.PYTHON_ENV == "development")
 
   async def onStartLog(self, channelId, clanTag, interval):
-    warlog = WarlogModel.objects(clanTag=clanTag)
+    warlog = Warlog.objects(clanTag=clanTag)
     channel = self.bot.get_channel(channelId)
 
     if channel is None:
@@ -27,60 +36,42 @@ class WarlogEventHandler():
     if len(warlog) != 0:
       await channel.send(f"The clan {clanTag} has already started warlogging.")
     else:
-      newWarlog = WarlogModel(clanTag = clanTag, interval = interval, channelId = channelId)
+      newWarlog = Warlog(clanTag = clanTag, interval = interval, channelId = channelId)
       newWarlog.save()
 
       await channel.send("You have succsessfullt started logging your clan war battles.")
  
   async def log(self):
-    print("Log function")
+    warlogs = Warlog.objects.all()
 
-# async function log() {
-#   const clans = await Clan.find({});
-  
-#   clans.filter(clan => {
-#     const delta = moment().subtract(clan.previousRun);
-#     return delta.valueOf() >= (clan.interval);
-#   })
-#   .map(async clan => {
-#     try {
-#       console.log(`${moment().format('hh:mm:ss')}: Running logging for ${clan.tag}`);
+    for warlog in warlogs:
+      now = datetime.now(timezone.utc)
+      deltaTime = now.timestamp() - warlog.previousRun
 
-#       // Default interval
-#       let interval = clan.interval;
+      # print(f"time now = {now.timestamp()} delta = {deltaTime} previousRun = {warlog.previousRun}")
 
-#       // The channel to send log to
-#       const channel = await client.channels.fetch(clan.channelId);
-      
-#       // Need to have a bigger interval if the log has never been run before
-#       if(clan.previousRun === 0) {
-#         const warlog = await clanApi.warlog(clan.tag);
-#         const now = moment();
-#         const warCreated = moment(warlog[0].createdDate);
-#         const collectionEnding = moment(warCreated).add(24, 'hours');
-#         const warEnding = moment(warCreated).add(48, 'hours');
-#         const isWarday = now.isBetween(collectionEnding, warEnding);
-  
-#         if(isWarday) {
-#           interval = now.subtract(collectionEnding).valueOf()
-#         }
-#       }
-  
-#       logBattles(channel, clan.tag, interval);
+      if deltaTime >= warlog.interval:
+        interval = warlog.interval
+        channel = self.bot.get_channel(warlog.channelId)
+        latestClanWarlog = self.api.getWarlog(warlog.clanTag)[0]
+        warCreated = parse(latestClanWarlog["createdDate"])
 
-#       // Set previoustime to now and save
-#       clan.previousRun = moment().valueOf();
-#       clan.save();
-#     } catch(err) {console.error(err)};
-    
-#   });
+        if warlog.previousRun == 0:
+          collectionEnding = warCreated + timedelta(hours = 24)
+          warEnding = warCreated + timedelta(hours = 48)
+          isWarDay = (collectionEnding < now < warEnding)
 
-#   setTimeout(log, logInterval);
-# }
+          # print(f"War created: {warCreated}")
+          # print(f"now:       : {now}")
+          # print(f"war ending : {warEnding}")
+          # print(f"isWarDay   : {isWarDay}")
 
-# function startWarlogScheduler(discordClient){
-#   client = discordClient;
+          if isWarDay or self.isDevelopment:
+            calculatedInterval = now - collectionEnding
+            interval = floor(calculatedInterval.total_seconds() / 60) # result in minutes
 
-#   // Start warlog scheduler
-#   log();
-# }
+        #logBattles(channel, warlog.clanTag, interval)
+        logBattles(channel, warlog.clanTag, warCreated, interval)
+        
+        # warlog.previousRun = now.timestamp()
+        # warlog.save()
