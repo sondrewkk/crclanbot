@@ -1,34 +1,31 @@
 from crApi import ClashRoyaleApi
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from dateutil.parser import *
 from itertools import groupby
 from tabulate import tabulate
-import json
-import re
-import base64
 from io import BytesIO
 from PIL import Image
-import string
+# import string
+from discord import File, Embed, Colour
+from pytz import timezone
+import pytz
 
 api = ClashRoyaleApi()
 
-#def logBattles(channel, clanTag, interval):
-def logBattles(channel, clanTag, warStart, interval):
+async def logBattles(channel, clanTag, warStart, interval):
   print("Log Battles...")
-  
   warDayBattles = api.getClanWarDayBattles(clanTag)
   
-  intervalTime = datetime.now(tz = timezone.utc) - timedelta(minutes = interval)
-  #intervalTime = datetime.now(tz = timezone.utc) - timedelta(hours = 48)
+  intervalTime = datetime.now(tz=pytz.utc) - timedelta(minutes=interval)
   warDayBattlesFiltered = [battle for battle in warDayBattles if parse(battle["battleTime"]) > intervalTime]
-
-  print(f"Warday filter battles \n{len(warDayBattlesFiltered)}")
 
   for battle in warDayBattlesFiltered:
 
+    player = battle["team"][0]
+    opponent = battle["opponent"][0]
+
     # Get player tag and the last 25 battles played
-    playerTag = battle["team"][0]["tag"][1:]
-    print(f"Player: {playerTag}")
+    playerTag = player["tag"][1:]
     playerBattles = api.getPlayerBattles(playerTag)
     
     if playerBattles is None or type(playerBattles) is not list:
@@ -36,70 +33,57 @@ def logBattles(channel, clanTag, warStart, interval):
       continue
 
     playerBattlesFiltered = [battle for battle in playerBattles if parse(battle["battleTime"]) > warStart]
-    playerBattlesGrouped = groupBattles(playerBattlesFiltered, "type")
+    playerBattlesGrouped = _groupBattles(playerBattlesFiltered, "type")
 
     # Get the deck that was played in the war battle and create decklink to open in-game
-    warBattleDeck = battle["team"][0]["cards"]
-    deckLink = buildDeckLink(warBattleDeck)
+    warBattleDeck = player["cards"]
+    deckLink = _buildDeckLink(warBattleDeck)
 
+    groupedDeckMatches = _deckMatches(warBattleDeck, playerTag, playerBattlesGrouped)
+    deckMatchTable = _createDeckMatchesTable(groupedDeckMatches) 
 
-    groupedDeckMatches = deckMatches(warBattleDeck, playerTag, playerBattlesGrouped)
-    createDeckMatchesTable(groupedDeckMatches)
-
-    numOfTraningBattles = countTraningBattles(groupedDeckMatches)
+    numOfTraningBattles = _countTraningBattles(groupedDeckMatches)
     numOfFriendlyBattles = len([battle for battle in playerBattles if battle["type"] == "clanMate"])
 
-    victory = battle["team"][0]["crowns"] > battle["opponent"][0]["crowns"]
+    deckImageBuffer = _createDeckImageBuffer(warBattleDeck)
+    deckAttachment = File(deckImageBuffer, filename="deck.png")
 
-    deckImageBuffer = createDeckImageBuffer(warBattleDeck)
-    #print(deckImageBuffer)
+    victory = player["crowns"] > opponent["crowns"]
+    title = "Victory!" if victory else "Loss"
+    color = Colour.green() if victory else Colour.red()
+    description = f"{player['name']} ({player['startingTrophies']}) vs {opponent['name']} ({opponent['startingTrophies']})"
+    oslo = timezone("Europe/Oslo")
+    battleTime = parse(battle["battleTime"]).replace(tzinfo=oslo)
 
-    print("\n")
-    
-    
+    embed = Embed(title=title, color=color, description=description)
+
+    embed.add_field(name='Player', value=f"[{player['name']}](https://royaleapi.com/player/{playerTag[1:]})")
+    embed.add_field(name='Opponent', value=opponent["name"])
+    embed.add_field(name='Battle time', value=battleTime, inline=False)
+    embed.add_field(name='Training', value=f"{numOfTraningBattles} practice battles with the war deck \n A total of {numOfFriendlyBattles} friendlies during the last 25 battles.\n```{deckMatchTable}```\n *NOTE: The table is showing games played with the wardeck (WD) and games that is 1, 2, 3 or 4 cards diffrent from WD.*", inline=False)
+    embed.add_field(name='Deck', value=f"[Click here to try the deck]({deckLink} \"Deck\")", inline=False)
+    embed.set_image(url="attachment://deck.png")
+
+    await channel.send(file=deckAttachment, embed=embed)
 
 
- 
-
-def buildDeckLink(cards):
+###########################################################
+# Helper functions
+# #########################################################
+def _buildDeckLink(cards):
   deck = ";".join([str(card["id"]) for card in cards])
   return f"https://link.clashroyale.com/deck/en?deck={deck}&war=1"
-  
-# def trainingBattleFilter(playerTag, warBattleDeck, playerBattle):
-#   deckEqualTeam = isDeckEqual(warBattleDeck, playerBattle["team"][0]["cards"]) and playerTag == playerBattle["team"][0]["tag"][1:]
-#   #deckEqualOpponent = isDeckEqual(warBattleDeck, playerBattle["opponent"][0]["cards"]) and playerTag == playerBattle["opponent"][0]["tag"][1:]
 
-#   return deckEqualTeam #or deckEqualOpponent
-
-# def isDeckEqual(deck, otherDeck):
-#   cardIds = sorted([card["id"] for card in deck])
-#   otherCardIds = sorted([card["id"] for card in otherDeck])
-
-#   return cardIds == otherCardIds
-
-def groupBattles(battles, key):
+def _groupBattles(battles, key):
   groups = {}
-  battles.sort(key = lambda battle: battle[key])
+  battles.sort(key=lambda battle: battle[key])
 
   for k, g in groupby(battles, lambda battle: battle[key]):
     groups.update({k: list(g)})
   
   return groups
 
-# def countBattles(groups):
-#   total = 0
-#   battlesCounted = {}
-
-#   for group in groups:
-#     count = len(groups[group])
-#     total += count
-#     battlesCounted.update({group: count})
-  
-#   battlesCounted.update({"total": total})
-
-#   return battlesCounted
-
-def countTraningBattles(deckMatchesGroups):
+def _countTraningBattles(deckMatchesGroups):
   traningBattles = 0
 
   for group in deckMatchesGroups:
@@ -108,15 +92,14 @@ def countTraningBattles(deckMatchesGroups):
   
   return traningBattles
 
-
-def numberOfEqualCards(warDeck, otherDeck):
+def _numberOfEqualCards(warDeck, otherDeck):
   warSet = set(([card["id"] for card in warDeck]))
   otherSet = set(([card["id"] for card in otherDeck]))
   matches = warSet.intersection(otherSet)
   
   return len(matches)
 
-def deckMatches(warDeck, playerTag, battleGroups):
+def _deckMatches(warDeck, playerTag, battleGroups):
   groupMatches = {}
 
   for group in battleGroups:
@@ -125,45 +108,47 @@ def deckMatches(warDeck, playerTag, battleGroups):
 
     for battle in battles:
       deck = battle["team"][0]["cards"]
-      matches = numberOfEqualCards(warDeck, deck)
+      matches = _numberOfEqualCards(warDeck, deck)
       cardMatches[matches] += 1
     
     groupMatches.update({group: cardMatches})
 
   return groupMatches
 
-def createDeckMatchesTable(matchesGrouped):
+def _createDeckMatchesTable(matchesGrouped):
   headers = ["Battle type", "WD", "-1", "-2", "-3", "-4"]
   table = []
 
   for group in matchesGrouped:
-    row = []
-    hasMatch = False
-    row.append(group)
+    if group != "clanWarWarDay":
+      row = []
+      hasMatch = False
+      row.append(group)
 
-    for i in range(8, 3, -1):
-      numOfMatches = matchesGrouped[group][i]
-      row.append(numOfMatches)
+      for i in range(8, 3, -1):
+        numOfMatches = matchesGrouped[group][i]
+        row.append(numOfMatches)
 
-      if numOfMatches > 0:
-        hasMatch = True
-    
-    if hasMatch:
-      table.append(row)
+        if numOfMatches > 0:
+          hasMatch = True
+      
+      if hasMatch:
+        table.append(row)
   
-  return table
+  tableStr = tabulate(table, headers=headers, tablefmt="presto")
+  
+  return tableStr
 
-def createDeckImageBuffer(deck):
-  print("create deck image buffer")
+def _createDeckImageBuffer(deck):
   cardImageWidth = 302
   cardImageHeight = 363
   deckImageWidht = cardImageWidth * len(deck)
   xOffset = 0
   
-  deckImage = Image.new("RGB", (deckImageWidht, cardImageHeight))
+  deckImage = Image.new("RGBA", (deckImageWidht, cardImageHeight))
 
   for card in deck:
-    cardName = getCardImageName(card["name"])
+    cardName = _getCardImageName(card["name"])
     cardImageSrc = f"./cards/{cardName}.png"
     cardImage = Image.open(cardImageSrc)
     
@@ -172,91 +157,13 @@ def createDeckImageBuffer(deck):
     xOffset += 1
   
   imageBuffer = BytesIO()
-  deckImage.save(imageBuffer, format="PNG")
-  imageStr = base64.b64encode(imageBuffer.getvalue())
+  deckImage.save(imageBuffer, format="png")
+  imageBuffer.seek(0)
 
-  return imageStr  
+  return imageBuffer
 
-  
+def _getCardImageName(cardName):
+  translateTable = {" ": "-", ".": ""}
+  cardImageName = cardName.translate(str.maketrans(translateTable)).lower()
 
-  
-
-# /**
-#  * Creating a .PNG image of the deck returned as a Buffer
-#  * @param {An array containg eight cards} deck 
-#  */
-# const createDeckImageBuffer = async deck => {
-#   const cardImages = deck.map((card, i) => {
-#     const cardImageWidth = 302;
-#     const cardSrc = `./cards/${cardImageName(card.name)}.png`;
-
-#     const cardImage = {
-#       src: cardSrc,
-#       x: i * cardImageWidth,
-#       y: 0
-#     };
-
-#     return cardImage;
-
-#   const deckImage = await mergeImages(cardImages, {
-#     width: 302*8,
-#     height: 363,
-#     Canvas: Canvas,
-#     Image: Image
-#   });
-
-#   const buffer = Buffer.from(deckImage.substring(deckImage.indexOf(',') + 1), 'base64');
-
-#   return buffer;
-#   });
-def getCardImageName(cardName):
-  cardImageName = cardName.replace(" ", "-").lower()
-  print(cardImageName)
-  cardImageName = cardImageName.translate(str.maketrans("","", string.punctuation))
-  print(f"{cardName} \t\t {cardImageName}")
   return cardImageName
-
-#           // The embed that is going to be returned to discord
-#           const embed = new MessageEmbed()
-#               .setColor(victory ? '#33cc33' : '#cc3300')
-#               .setTitle(victory ? 'Victory!' : 'Loss')
-#               .setDescription(`${battle.team[0].name} (${battle.team[0].startingTrophies}) vs ${battle.opponent[0].name} (${battle.opponent[0].startingTrophies})`)
-#               .addFields(
-#                 { name: 'Player', value: `[${battle.team[0].name}](https://royaleapi.com/player/${playerTag.substr(1)})`, inline: true},
-#                 { name: 'Opponent', value: `${battle.opponent[0].name}`, inline: true},
-#                 { name: 'Battle time', value: `${moment
-#                       .utc(battle.battleTime)
-#                       .locale(process.env.MOMENT_LOCALE)
-#                       .tz(process.env.TIME_ZONE)
-#                       .format(process.env.MOMENT_DATETIME_FORMAT)}`},
-#                 { name: 'Training', value: `${totalTrainingCount} practice battles with the war deck \n A total of ${allFriendlies} friendlies during the last 25 battles.\n The table is showing games played with the wardeck (WD) and games that is 1, 2, 3 or 4 cards diffrent from WD. ${countTable}`},
-#                 { name: 'Deck', value: `[Click here to try the deck](${deckLink} "Deck") `}
-#               )
-#               .attachFiles(new MessageAttachment(deckImage, 'deck.png'))
-#               .setImage('attachment://deck.png')
-
-#           return embed;
-
-#         } catch(err) {console.log(err)}
-#       });
-
-#       // Loop throug all battles and send the embed to discord
-#       Promise.all(logBattles)
-#         .then((battles) => {
-#           battles.map(embedMessage => {
-#             channel.send(embedMessage) // .catch(err => {console.error(err.message)})       
-#           })
-#         })
-#         .catch(err => {console.error(err)});
-
-#   } catch(err) {console.log(err)}
-# }
-
-
-
-
-
-# };
-
-# module.exports = { logBattles: logBattles };
-

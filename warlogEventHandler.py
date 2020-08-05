@@ -71,7 +71,7 @@ class WarlogEventHandler():
             interval = floor(calculatedInterval.total_seconds() / 60) # result in minutes
 
         #logBattles(channel, warlog.clanTag, interval)
-        logBattles(channel, warlog.clanTag, warCreated, interval)
+        await logBattles(channel, warlog.clanTag, warCreated, interval)
         
         # warlog.previousRun = now.timestamp()
         # warlog.save()
