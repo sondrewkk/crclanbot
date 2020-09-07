@@ -23,7 +23,13 @@ def main():
   bot = commands.Bot(command_prefix = env.PREFIX, description = "Clash Royale clan bot")
 
   # Connect to db
-  connect(env.DB_NAME)
+  connect(
+    db=env.DB_NAME,
+    username=env.DB_USER,
+    password=env.DB_USER_PASS,
+    host=env.DB_HOST,
+    port=env.DB_PORT,
+    authentication_source=env.DB_NAME)
 
   @bot.event
   async def on_ready():
@@ -37,7 +43,6 @@ def main():
     commandHandler = CommandHandler(bot, "commands")
 
   # Run bot
-
   bot.run(env.DISCORD_TOKEN, bot=True, reconnect=True)
 
 ######################################################################################  

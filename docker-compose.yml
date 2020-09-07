@@ -7,11 +7,9 @@ services:
       - "8080:80"
     environment:
       NODE_ENV: 'production'
+      TEST_DATA: 'False'
       PREFIX: '!'
       CR_API_URL: 'proxy.royaleapi.dev/v1'
-      MOMENT_LOCALE: 'nb'
-      TIME_ZONE: 'Europe/Oslo'
-      MOMENT_DATETIME_FORMAT: 'lll'
       DB_HOST: 'db'
       DB_PORT: 27017
       DB_NAME: 'crclanbot'
