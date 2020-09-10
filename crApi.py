@@ -31,28 +31,27 @@ class ClashRoyaleApi:
         json.dump(data, json_file)
         json_file.truncate()
 
+  def getRiverracelog(self, clanTag):
 
-  def getWarlog(self, clanTag):
+    if self.isDevelopment and not self.env.TEST_DATA:
+      return self.loadTestData(f"riverrace_{clanTag}")["items"]
 
-    if self.isDevelopment:
-      return self.loadTestData(f"warlog_{clanTag}")["items"]
+    url = f"https://{self.env.CR_API_URL}/clans/%23{clanTag}/riverracelog"
+    riverracelog = self.get(url)
 
-    url = f"https://{self.env.CR_API_URL}/clans/%23{clanTag}/warlog"
-    warlog = self.get(url)
-
-    if warlog is not None:
+    if riverracelog is not None:
 
       if self.env.TEST_DATA:
-        self.saveTestData(f"warlog_{clanTag}", warlog)
+        self.saveTestData(f"riverrace_{clanTag}", riverracelog)
 
-      return warlog["items"]
+      return riverracelog["items"]
     else:
-      print(f"Failed to get warlog for clan({clanTag}")
+      print(f"Failed to get riverracelog for clan({clanTag}")
       return None
 
   def getPlayerBattles(self, playerTag):
 
-    if self.isDevelopment:
+    if self.isDevelopment and not self.env.TEST_DATA:
       return self.loadTestData(f"player_{playerTag}")
 
     url = f"https://{self.env.CR_API_URL}/players/%23{playerTag}/battlelog"
@@ -77,29 +76,30 @@ class ClashRoyaleApi:
       print(f"Failed to get clan memebers for clan: {clanTag}")
       return None
 
-  def getClanWarDayBattles(self, clanTag):
+  def getClanRiverraceBattles(self, clanTag):
 
-    if self.isDevelopment:
-      return self.loadTestData("warBattles")
+    if self.isDevelopment and not self.env.TEST_DATA:
+      return self.loadTestData("riverraceBattles")
 
     clanMembers = self.getClanMemebers(clanTag)
 
     if clanMembers is not None:
-      warBattles = []
+      riverraceBattles = []
+      riverraceBattleTypes = ["riverRacePvP", "riverRaceDuel"]
 
       for member in clanMembers:
         playerTag = member["tag"][1:]
         playerBattles = self.getPlayerBattles(playerTag)       
-        playerWarBattles = [battle for battle in playerBattles if battle["type"] == "clanWarWarDay"]
+        playerRiverraceBattles = [battle for battle in playerBattles if battle["type"] in riverraceBattleTypes]
         
-        if len(playerWarBattles) > 0:
-          warBattles.extend(playerWarBattles)
+        if len(playerRiverraceBattles) > 0:
+          riverraceBattles.extend(playerRiverraceBattles)
 
       if self.env.TEST_DATA:
-        self.saveTestData("warBattles", warBattles)
+        self.saveTestData("riverraceBattles", riverraceBattles)
           
-      return warBattles
+      return riverraceBattles
 
     else:
-      print(f"Failed to get clan war day battles from clan: {clanTag}")
+      print(f"Failed to get clan river race battles from clan: {clanTag}")
       return None

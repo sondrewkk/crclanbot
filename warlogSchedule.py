@@ -14,57 +14,58 @@ api = ClashRoyaleApi()
 
 async def logBattles(channel, clanTag, warStart, interval):
   print("Log Battles...")
-  warDayBattles = api.getClanWarDayBattles(clanTag)
-  
-  intervalTime = datetime.now(tz=pytz.utc) - timedelta(minutes=interval)
-  warDayBattlesFiltered = [battle for battle in warDayBattles if parse(battle["battleTime"]) > intervalTime]
+  riverraceBattles = api.getClanRiverraceBattles(clanTag)
+  print(riverraceBattles)
+  # intervalTime = datetime.now(tz=pytz.utc) - timedelta(minutes=interval)
+  # riverraceBattlesFiltered = [battle for battle in riverraceBattles if parse(battle["battleTime"]) > intervalTime]
 
-  for battle in warDayBattlesFiltered:
+  # for battle in riverraceBattlesFiltered:
 
-    player = battle["team"][0]
-    opponent = battle["opponent"][0]
+  #   player = battle["team"][0]
+  #   opponent = battle["opponent"][0]
 
-    # Get player tag and the last 25 battles played
-    playerTag = player["tag"][1:]
-    playerBattles = api.getPlayerBattles(playerTag)
+    # Ikke intressant å sjekke opp treningskamper. Må heller sjekke lvl på kort, link til side med tips til endringer og synergier
+    # # Get player tag and the last 25 battles played
+    # playerTag = player["tag"][1:]
+    # playerBattles = api.getPlayerBattles(playerTag)
     
-    if playerBattles is None or type(playerBattles) is not list:
-      print("Player battles is not an array. Stopping")
-      continue
+    # if playerBattles is None or type(playerBattles) is not list:
+    #   print("Player battles is not an array. Stopping")
+    #   continue
 
-    playerBattlesFiltered = [battle for battle in playerBattles if parse(battle["battleTime"]) > warStart]
-    playerBattlesGrouped = _groupBattles(playerBattlesFiltered, "type")
+    # playerBattlesFiltered = [battle for battle in playerBattles if parse(battle["battleTime"]) > warStart]
+    # playerBattlesGrouped = _groupBattles(playerBattlesFiltered, "type")
 
     # Get the deck that was played in the war battle and create decklink to open in-game
-    warBattleDeck = player["cards"]
-    deckLink = _buildDeckLink(warBattleDeck)
+    # warBattleDeck = player["cards"]
+    # deckLink = _buildDeckLink(warBattleDeck)
 
-    groupedDeckMatches = _deckMatches(warBattleDeck, playerTag, playerBattlesGrouped)
-    deckMatchTable = _createDeckMatchesTable(groupedDeckMatches) 
+    #groupedDeckMatches = _deckMatches(warBattleDeck, playerTag, playerBattlesGrouped)
+    #deckMatchTable = _createDeckMatchesTable(groupedDeckMatches) 
 
-    numOfTraningBattles = _countTraningBattles(groupedDeckMatches)
-    numOfFriendlyBattles = len([battle for battle in playerBattles if battle["type"] == "clanMate"])
+    #numOfTraningBattles = _countTraningBattles(groupedDeckMatches)
+    #numOfFriendlyBattles = len([battle for battle in playerBattles if battle["type"] == "clanMate"])
 
-    deckImageBuffer = _createDeckImageBuffer(warBattleDeck)
-    deckAttachment = File(deckImageBuffer, filename="deck.png")
+    # deckImageBuffer = _createDeckImageBuffer(warBattleDeck)
+    # deckAttachment = File(deckImageBuffer, filename="deck.png")
 
-    victory = player["crowns"] > opponent["crowns"]
-    title = "Victory!" if victory else "Loss"
-    color = Colour.green() if victory else Colour.red()
-    description = f"{player['name']} ({player['startingTrophies']}) vs {opponent['name']} ({opponent['startingTrophies']})"
-    oslo = timezone("Europe/Oslo")
-    battleTime = parse(battle["battleTime"]).replace(tzinfo=oslo)
+    #victory = player["crowns"] > opponent["crowns"]
+    #title = "Victory!" if victory else "Loss"
+    #color = Colour.green() if victory else Colour.red()
+    #description = f"{player['name']} ({player['startingTrophies']}) vs {opponent['name']} ({opponent['startingTrophies']})"
+    #oslo = timezone("Europe/Oslo")
+    #battleTime = parse(battle["battleTime"]).replace(tzinfo=oslo)
 
-    embed = Embed(title=title, color=color, description=description)
+    #embed = Embed(title=title, color=color, description=description)
 
-    embed.add_field(name='Player', value=f"[{player['name']}](https://royaleapi.com/player/{playerTag[1:]})")
-    embed.add_field(name='Opponent', value=opponent["name"])
-    embed.add_field(name='Battle time', value=battleTime, inline=False)
-    embed.add_field(name='Training', value=f"{numOfTraningBattles} practice battles with the war deck \n A total of {numOfFriendlyBattles} friendlies during the last 25 battles.\n```{deckMatchTable}```\n *NOTE: The table is showing games played with the wardeck (WD) and games that is 1, 2, 3 or 4 cards diffrent from WD.*", inline=False)
-    embed.add_field(name='Deck', value=f"[Click here to try the deck]({deckLink} \"Deck\")", inline=False)
-    embed.set_image(url="attachment://deck.png")
+    # embed.add_field(name='Player', value=f"[{player['name']}](https://royaleapi.com/player/{playerTag[1:]})")
+    # embed.add_field(name='Opponent', value=opponent["name"])
+    # embed.add_field(name='Battle time', value=battleTime, inline=False)
+    # embed.add_field(name='Training', value=f"{numOfTraningBattles} practice battles with the war deck \n A total of {numOfFriendlyBattles} friendlies during the last 25 battles.\n```{deckMatchTable}```\n *NOTE: The table is showing games played with the wardeck (WD) and games that is 1, 2, 3 or 4 cards diffrent from WD.*", inline=False)
+    # embed.add_field(name='Deck', value=f"[Click here to try the deck]({deckLink} \"Deck\")", inline=False)
+    # embed.set_image(url="attachment://deck.png")
 
-    await channel.send(file=deckAttachment, embed=embed)
+    #await channel.send(file=deckAttachment, embed=embed)
 
 
 ###########################################################
