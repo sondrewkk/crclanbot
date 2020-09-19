@@ -25,7 +25,7 @@ class WarlogEventHandler():
     self.env = Environment()
     self.isDevelopment = (self.env.PYTHON_ENV == "development")
 
-  async def onStartLog(self, channelId, clanTag, interval):
+  async def onStartLog(self, channelId, clanTag):
     warlog = Warlog.objects(clanTag=clanTag)
     channel = self.bot.get_channel(channelId)
 
@@ -36,7 +36,7 @@ class WarlogEventHandler():
     if len(warlog) != 0:
       await channel.send(f"The clan {clanTag} has already started warlogging.")
     else:
-      newWarlog = Warlog(clanTag = clanTag, interval = interval, channelId = channelId)
+      newWarlog = Warlog(clanTag = clanTag, interval = 15 * 60, channelId = channelId)
       newWarlog.save()
 
       await channel.send("You have succsessfullt started logging your clan war battles.")
@@ -46,15 +46,25 @@ class WarlogEventHandler():
 
     for warlog in warlogs:
       now = datetime.now(timezone.utc)
-      deltaTime = now.timestamp() - warlog.previousRun
+      deltaTime = int(now.timestamp() - warlog.previousRun)
+      interval = warlog.interval
 
-      if deltaTime >= warlog.interval:
-        interval = warlog.interval
+      print(f"DeltaTime={deltaTime} interval={interval}")
+
+      if deltaTime >= interval:
         channel = self.bot.get_channel(warlog.channelId)
         latestClanWarlog = self.api.getRiverracelog(warlog.clanTag)[0]
         warCreated = parse(latestClanWarlog["createdDate"])
 
+        print(f"war created={warCreated} now={now}")
+
+        if self.isDevelopment:
+          interval = int((now - warCreated).total_seconds())
+          print(f"interval={interval}")
+
         await logBattles(channel, warlog.clanTag, warCreated, interval)
         
-        warlog.previousRun = now.timestamp()
+        warlog.previousRun = int(now.timestamp())
         warlog.save()
+    
+    print("Logging finished")
