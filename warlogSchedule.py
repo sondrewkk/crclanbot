@@ -58,14 +58,22 @@ async def _duelLog(battle, channel):
   deckLinkInfo = "Clink on the deck you want to try:\n"
 
   for idx, deckLink in enumerate(deckLinks):
-    deckLinkInfo += f"[Match {idx}]({deckLink} \"Deck\")\n"
-
+    deckLinkInfo += f"[Deck {idx + 1}]({deckLink} \"Deck\") {' | ' if idx + 1 < numOfBattles else ''}"
+  
+  result = f"The fight needed {numOfBattles} rounds to get a winner.\n"
+  
+  if victory:
+    result += f"{player['name']} won the battle with {player['crowns']} crowns over {opponent['name']}'s {opponent['crowns']} crowns"
+  else:
+    result += f"{player['name']} lost the battle with {player['crowns']} crowns under {opponent['name']}'s {opponent['crowns']} crowns"
+  
+  
   embed = Embed(title=title, color=color, description=description)
 
   embed.add_field(name='Player', value=f"[{player['name']}](https://royaleapi.com/player/{playerTag[1:]})")
   embed.add_field(name='Opponent', value=opponent["name"])
   embed.add_field(name='Battle time', value=battleTime, inline=False)
-  embed.add_field(name='Duel summary', value = f"The fight needed {numOfBattles} rounds to get a winner.\n", inline=False)
+  embed.add_field(name='Result', value=result, inline=False)
   embed.add_field(name='Decks', value=deckLinkInfo, inline=False)
   embed.set_image(url="attachment://deck.png")
   
