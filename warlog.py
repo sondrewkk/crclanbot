@@ -23,6 +23,27 @@ async def logBattles(channel, clanTag, warStart, interval):
     else:
       embed = await _singelLog(battle, channel)
 
+async def logFinishLineReached(channel, warStart, finished, standing):
+  timeUsed = finished - warStart
+  warEnd = warStart + timedelta(days=7)
+
+  title = "Race finished!"
+  color = Colour.green() if standing < 3 else Colour.red()
+  warStartFormatted = warStart.strftime('%A %d/%m %H:%M:%S')
+  nextWarFormatted = warEnd.strftime('%A %d/%m %H:%M:%S')
+  description = f"The race started {warStartFormatted}. You guys managed to finish as number {standing} and used {timeUsed}.\n The next river race is starting {nextWarFormatted}. Be prepared!!"
+  
+  embed = Embed(title=title, color=color, description=description)
+
+  await channel.send(embed=embed)
+
+async def logSummary(channel, clanTag):
+  # Liste over klanen med plassering, ferdig tid, trofe endring, fame, repareringspoeng
+  # Vise medlem med mest innsamlet fame
+  # En liste over medlemmer som ikke har bidratt med fame eller repair poeng
+  print("logSummary is not IMNPLEMENTED")
+
+
 
 ###########################################################
 # Helper functions

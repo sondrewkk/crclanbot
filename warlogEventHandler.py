@@ -6,7 +6,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta, timezone
 from crApi import ClashRoyaleApi
 from dateutil.parser import *
-from warlogSchedule import logBattles
+from warlog import logBattles, logFinishLineReached, logSummary
 from math import floor
 from environment import Environment
 class WarlogEmitter(Dispatcher):
@@ -48,23 +48,63 @@ class WarlogEventHandler():
       now = datetime.now(timezone.utc)
       deltaTime = int(now.timestamp() - warlog.previousRun)
       interval = warlog.interval
+      finishLineReached = warlog.finishLineReached
+      channel = self.bot.get_channel(warlog.channelId)
 
-      print(f"DeltaTime={deltaTime} interval={interval}")
+      print(f"now={now} | deltaTime={deltaTime} | interval={interval} | finishLineReached={finishLineReached}")
 
-      if deltaTime >= interval:
-        channel = self.bot.get_channel(warlog.channelId)
-        latestClanWarlog = self.api.getRiverracelog(warlog.clanTag)[0]
-        warCreated = parse(latestClanWarlog["createdDate"])
+      latestClanWarlog = self.api.getRiverracelog(warlog.clanTag)[0]
+      currentWar = self.api.getCurrentRiverrace(warlog.clanTag)
+      clan = currentWar["clan"]
+      warCreated = parse(latestClanWarlog["createdDate"])
 
-        print(f"war created={warCreated} now={now}")
-
+      if deltaTime >= interval and not finishLineReached:
+        # Recalculate interval for development
         if self.isDevelopment:
           interval = int((now - warCreated).total_seconds())
-          print(f"interval={interval}")
+          print(f"Interval changed to: {interval}")
 
-        await logBattles(channel, warlog.clanTag, warCreated, interval)
+        # Check if clan has reach finish line
+        if 'finishTime' in clan:
+          finishLineReached = True
+          warlog.finishLineReached = finishLineReached
+          finishTime = parse(clan["finishTime"])
+          warlog.currentRaceFinishTime = finishTime
+      
+        #await logBattles(channel, warlog.clanTag, warCreated, interval)
+        print(f"Logging battles")
         
-        warlog.previousRun = int(now.timestamp())
+        #warlog.previousRun = int(now.timestamp())
         warlog.save()
-    
+
+        if finishLineReached:
+          standing = 1
+          clans = currentWar["clans"]
+
+          for clan in clans:
+            if 'finishTime' in clan:
+              clanFinish = parse(clan["finishTime"])
+              finishedBefore = clanFinish > finishTime
+
+              if finishedBefore:
+                standing += 1
+
+          await logFinishLineReached(channel, warCreated, finishTime, standing)
+
+      else:
+        riverraceFinished = warCreated + timedelta(days=7)
+        isWeekFinished = now >= riverraceFinished
+
+        # DEV
+        isWeekFinished = True
+        print(f"riverraceFinished={riverraceFinished} | isWeekFinished={isWeekFinished}")
+
+        if isWeekFinished:
+          await logSummary(channel, warlog.clanTag)
+
+          warlog.finishLineReached = False
+          warlog.currentRaceFinishTime = 0
+          warlog.previousRun = int(now.timestamp())
+          warlog.save()
+
     print("Logging finished")

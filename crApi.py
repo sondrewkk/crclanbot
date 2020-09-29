@@ -49,6 +49,23 @@ class ClashRoyaleApi:
       print(f"Failed to get riverracelog for clan({clanTag}")
       return None
 
+  def getCurrentRiverrace(self, clanTag):
+    if self.isDevelopment and not self.env.TEST_DATA:
+      return self.loadTestData(f"currentriverrace_{clanTag}")
+
+    url = f"https://{self.env.CR_API_URL}/clans/%23{clanTag}/currentriverrace"
+    currentriverrace = self.get(url)
+
+    if currentriverrace is not None:
+
+      if self.env.TEST_DATA:
+        self.saveTestData(f"currentriverrace_{clanTag}", currentriverrace)
+
+      return currentriverrace
+    else:
+      print(f"Failed to get currentriverrace for clan({clanTag}")
+      return None
+
   def getPlayerBattles(self, playerTag):
 
     if self.isDevelopment and not self.env.TEST_DATA:
@@ -79,7 +96,7 @@ class ClashRoyaleApi:
   def getClanRiverraceBattles(self, clanTag):
 
     if self.isDevelopment and not self.env.TEST_DATA:
-      return self.loadTestData("riverraceBattles")
+      return self.loadTestData("riverraceBattles_{clanTag}")
 
     clanMembers = self.getClanMemebers(clanTag)
 
@@ -96,7 +113,7 @@ class ClashRoyaleApi:
           riverraceBattles.extend(playerRiverraceBattles)
 
       if self.env.TEST_DATA:
-        self.saveTestData("riverraceBattles", riverraceBattles)
+        self.saveTestData(f"riverraceBattles_{clanTag}", riverraceBattles[:8])
           
       return riverraceBattles
 
