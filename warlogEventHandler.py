@@ -48,7 +48,7 @@ class WarlogEventHandler():
       now = datetime.now(timezone.utc)
       deltaTime = int(now.timestamp() - warlog.previousRun)
       interval = warlog.interval
-      finishLineReached = warlog.finishLineReached
+      finishLineReached = True #warlog.finishLineReached
       channel = self.bot.get_channel(warlog.channelId)
 
       print(f"now={now} | deltaTime={deltaTime} | interval={interval} | finishLineReached={finishLineReached}")
@@ -100,7 +100,7 @@ class WarlogEventHandler():
         print(f"riverraceFinished={riverraceFinished} | isWeekFinished={isWeekFinished}")
 
         if isWeekFinished:
-          await logSummary(channel, warlog.clanTag)
+          await logSummary(channel, warlog.clanTag, latestClanWarlog)
 
           warlog.finishLineReached = False
           warlog.currentRaceFinishTime = 0

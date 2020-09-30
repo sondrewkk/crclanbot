@@ -37,11 +37,22 @@ async def logFinishLineReached(channel, warStart, finished, standing):
 
   await channel.send(embed=embed)
 
-async def logSummary(channel, clanTag):
+async def logSummary(channel, clanTag, latestRiverraceLog):
   # Liste over klanen med plassering, ferdig tid, trofe endring, fame, repareringspoeng
   # Vise medlem med mest innsamlet fame
   # En liste over medlemmer som ikke har bidratt med fame eller repair poeng
-  print("logSummary is not IMNPLEMENTED")
+  standings = latestRiverraceLog["standings"]
+  clanStanding = _getClanStanding(clanTag, standings)
+  clan = clanStanding["clan"]
+  rank = clanStanding["rank"]
+  trophyChange = clanStanding["trophyChange"]
+  
+  clanName = clan["name"]
+  finishTime = parse(clan["finsihTime"])
+  fame = clan["fame"]
+  participants = clan["participants"]
+  participantsNotContributing = _getParticipantsNotContributing(participants)
+  topParticipant = _getTopParticipant(participants)
 
 
 
@@ -169,3 +180,16 @@ def _getCardImageName(cardName):
   cardImageName = cardName.translate(str.maketrans(translateTable)).lower()
 
   return cardImageName
+
+def _getClanStanding(clanTag, standings):
+  clan = [standing for standing in standings if standing["clan"]["tag"][1:] == clanTag]
+  return clan
+
+def _getParticipantsNotContributing(participants):
+  participantsNotContributing = [participant for participant in participants if participant["fame"] == 0 and participant["repairPoints"] == 0]
+  return participantsNotContributing
+
+def _getTopParticipant(participants):
+  numOfParticipants = len(participants)
+  topParticipant = participants.pop(numOfParticipants - 1)
+  return topParticipant
