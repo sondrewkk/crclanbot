@@ -46,13 +46,19 @@ async def logSummary(channel, clanTag, latestRiverraceLog):
   clan = clanStanding["clan"]
   rank = clanStanding["rank"]
   trophyChange = clanStanding["trophyChange"]
-  
   clanName = clan["name"]
-  finishTime = parse(clan["finsihTime"])
+  finishTime = parse(clan["finishTime"])
   fame = clan["fame"]
-  participants = clan["participants"]
+  participants = sorted(clan["participants"], key=lambda x: x["fame"] + x["repairPoints"])
   participantsNotContributing = _getParticipantsNotContributing(participants)
-  topParticipant = _getTopParticipant(participants)
+  topParticipant = participants.pop()
+
+  # Embed
+  embed = Embed(title=clanName, color=Colour.purple(), description="Ricerrace ended!")
+  embed.add_field(name="Best member", value=f"Congratulation to {topParticipant['name']} for exelent work this week. Gattering {topParticipant['fame']} fame is very good!", inline=False)
+
+  await channel.send(embed=embed)
+
 
 
 
@@ -183,13 +189,8 @@ def _getCardImageName(cardName):
 
 def _getClanStanding(clanTag, standings):
   clan = [standing for standing in standings if standing["clan"]["tag"][1:] == clanTag]
-  return clan
+  return clan.pop()
 
 def _getParticipantsNotContributing(participants):
   participantsNotContributing = [participant for participant in participants if participant["fame"] == 0 and participant["repairPoints"] == 0]
   return participantsNotContributing
-
-def _getTopParticipant(participants):
-  numOfParticipants = len(participants)
-  topParticipant = participants.pop(numOfParticipants - 1)
-  return topParticipant
