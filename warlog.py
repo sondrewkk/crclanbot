@@ -6,6 +6,7 @@ from PIL import Image
 from discord import File, Embed, Colour
 from pytz import timezone
 import pytz
+from tabulate import tabulate
 
 api = ClashRoyaleApi()
 
@@ -52,10 +53,12 @@ async def logSummary(channel, clanTag, latestRiverraceLog):
   participants = sorted(clan["participants"], key=lambda x: x["fame"] + x["repairPoints"])
   participantsNotContributing = _getParticipantsNotContributing(participants)
   topParticipant = participants.pop()
+  standingTable = _buildStandingTableMarkdown(standings)
 
   # Embed
   embed = Embed(title=clanName, color=Colour.purple(), description="Ricerrace ended!")
   embed.add_field(name="Best member", value=f"Congratulation to {topParticipant['name']} for exelent work this week. Gattering {topParticipant['fame']} fame is very good!", inline=False)
+  embed.add_field(name="Standings", value=standingTable, inline=False)
 
   await channel.send(embed=embed)
 
@@ -194,3 +197,27 @@ def _getClanStanding(clanTag, standings):
 def _getParticipantsNotContributing(participants):
   participantsNotContributing = [participant for participant in participants if participant["fame"] == 0 and participant["repairPoints"] == 0]
   return participantsNotContributing
+
+def _buildStandingTable(standings):
+  headers = ["Rank", "Clan", "Finish time", "Trophy change", "Fame", "Repair points"]
+  rows = []
+
+def _buildStandingTableMarkdown(standings):
+  rows = []
+
+  for standing in standings:
+    clan = standing["clan"]
+    rank = standing["rank"]
+    clanName = clan["name"]
+    finishTime = "---"
+    
+    if "finishTime" in clan:
+      finishTime = parse(clan["finishTime"])
+      
+    trophyChange = standing["trophyChange"]
+    clanScore = f"{clan['clanScore']}".zfill(4)
+    fame = clan["fame"]
+    repairPoints = f"{clan['repairPoints']}".zfill(5)
+    rows.append(f"`#{rank}` `{fame}` `{repairPoints}` `{clanScore} +({trophyChange})` **{clanName}**\n")
+
+  return "".join(rows)
